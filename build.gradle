@@ -1,0 +1,48 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'antlr'
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.14.0'
+    implementation 'org.slf4j:slf4j-api:1.7.32'
+    implementation 'org.antlr:antlr4-runtime:4.7.2'
+    antlr "org.antlr:antlr4:4.7"
+}
+
+sourceSets {
+    main.java.srcDirs += "${project.buildDir}/generated-src/antlr/main"
+}
+
+generateGrammarSource {
+    arguments += ["-visitor", "-package", "antlr"]
+    outputDirectory = file("${project.buildDir}/generated-src/antlr/main/antlr")
+}
+
+run {
+    standardInput = System.in
+}
+
+application {
+    mainClassName = 'app.App'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+task customFatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': application.mainClassName
+    }
+    baseName = rootProject.name
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    with jar
+}
